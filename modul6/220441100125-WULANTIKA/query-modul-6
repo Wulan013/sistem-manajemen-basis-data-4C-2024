@@ -1,0 +1,58 @@
+-- mengecek buku paling banyak dipinjam
+DELIMITER //
+CREATE PROCEDURE BukuDipinjam(
+    IN idbuku INT,
+    OUT statusbuku VARCHAR(255)
+)
+BEGIN
+    DECLARE namabuku VARCHAR(255);
+    DECLARE bukuterlaris INT;
+
+    -- Mendapatkan nama buku berdasarkan ID
+    SELECT judul INTO namabuku
+    FROM buku
+    WHERE id_buku = idbuku;
+
+    -- Mendapatkan ID produk yang paling sering dibeli/disewa
+    SELECT id_buku
+    INTO bukuterlaris
+    FROM peminjaman
+    GROUP BY id_buku
+    ORDER BY COUNT(*) DESC
+    LIMIT 1;
+
+    -- Mengecek apakah produk yang diberikan adalah produk terlaris
+    IF idbuku = bukuterlaris THEN
+        SET statusbuku = CONCAT(namabuku, ' adalah produk/jasa terlaris');
+    ELSE
+        SET statusbuku = CONCAT(namabuku, ' bukan produk/jasa terlaris');
+    END IF;
+END //
+
+DELIMITER ;
+
+
+SET @statusbuku = '';
+CALL BukuDipinjam(12, @statusbuku);
+SELECT @statusbuku;
+
+
+-- Perulangan WHILE
+DELIMITER//
+CREATE PROCEDURE TampilkanData(
+	IN idP INT
+)
+BEGIN
+    DECLARE i INT DEFAULT 1;
+    
+    WHILE i < idP DO	
+        SET i = i + 1;
+    END WHILE;
+        SELECT *
+        FROM peminjaman
+        LIMIT i;
+END //
+DELIMITER ;
+
+CALL TampilkanData(10);
+
