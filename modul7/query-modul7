@@ -1,0 +1,82 @@
+-- Trigger untuk mencatat setiap kali baris baru dimasukkan ke dalam tabel --
+CREATE TABLE Kategori_Log (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    kategori_id INT,
+    kategori_nama VARCHAR(50),
+    tanggal_insert TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+DELIMITER//
+
+CREATE TRIGGER log_insert
+AFTER INSERT ON kategori
+FOR EACH ROW
+BEGIN
+  INSERT INTO Kategori_Log (kategori_id, kategori_nama)
+  VALUES (NEW.id_kategori, NEW.nama_kategori);
+END//
+
+DELIMITER ;
+
+-- Contoh INSERT yang akan memicu trigger
+INSERT INTO kategori (id_kategori, nama_kategori)
+VALUES (21, 'horor');
+
+-- Memeriksa apakah log ditambahkan
+SELECT * FROM kategori_log;
+
+
+
+-- Trigger untuk memastikan bahwa sebuah nilai yang dimasukkan tidak boleh negatif. --
+DELIMITER //
+
+CREATE TRIGGER check_harga
+BEFORE INSERT ON buku
+FOR EACH ROW
+BEGIN
+    IF NEW.harga_buku < 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Harga tidak boleh negatif';
+    END IF;
+END;
+//
+
+DELIMITER ;
+
+-- Contoh INSERT yang akan memicu trigger
+INSERT INTO buku (id_buku, judul, tahun_terbit,id_kategori, harga_buku)
+VALUES (23, 'IPS', 1999, 3, -75000);
+
+
+
+-- Trigger untuk memperbaharui satu data dari sebuah table, maka table yang lain juga diperbaharui --
+DELIMITER //
+CREATE TRIGGER update_kategori
+AFTER UPDATE ON kategori
+FOR EACH ROW
+BEGIN
+    UPDATE buku SET update_message = CONCAT('Update: ', NEW.nama_kategori)
+    WHERE id_kategori = NEW.id_kategori;
+ 
+END//
+DELIMITER ;
+
+UPDATE kategori SET nama_kategori = 'Bulol' WHERE id_kategori = 1;
+SELECT * FROM buku;
+
+
+-- Trigger untuk memastikan no telp yang diinputkan sesuai ketentuan (minimal 10 angka) jika tidak sesuai tampilkan pesan “No Telpon tidak boleh kurang dari 10 angka” --
+DELIMITER //
+
+CREATE TRIGGER no_telp_valid
+BEFORE UPDATE ON anggota
+FOR EACH ROW
+BEGIN
+    IF LENGTH(NEW.no_telp) < 10 THEN
+SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'No Telpon tidak boleh kurang dari 10 angka';
+    END IF;
+END//
+DELIMITER;
+
+UPDATE anggota SET no_telp = '0823371' WHERE id_anggota = 1;
+SELECT * FROM anggota;
